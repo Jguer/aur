@@ -86,7 +86,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name:             "default",
 			args:             args{opts: []ClientOption{}},
-			wantBaseURL:      "https://aur.archlinux.org/rpc.php?",
+			wantBaseURL:      "https://aur.archlinux.org/rpc/?",
 			wanthttpClient:   http.DefaultClient,
 			wantErr:          false,
 			wantRequestDoers: []RequestEditorFn{},
@@ -94,15 +94,15 @@ func TestNewClient(t *testing.T) {
 		{
 			name:             "custom base url",
 			args:             args{opts: []ClientOption{WithBaseURL("localhost:8000")}},
-			wantBaseURL:      "localhost:8000/rpc.php?",
+			wantBaseURL:      "localhost:8000/rpc/?",
 			wanthttpClient:   http.DefaultClient,
 			wantErr:          false,
 			wantRequestDoers: []RequestEditorFn{},
 		},
 		{
 			name:             "custom base url complete",
-			args:             args{opts: []ClientOption{WithBaseURL("localhost:8000/rpc.php?")}},
-			wantBaseURL:      "localhost:8000/rpc.php?",
+			args:             args{opts: []ClientOption{WithBaseURL("localhost:8000/rpc/?")}},
+			wantBaseURL:      "localhost:8000/rpc/?",
 			wanthttpClient:   http.DefaultClient,
 			wantErr:          false,
 			wantRequestDoers: []RequestEditorFn{},
@@ -110,7 +110,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name:             "custom http client",
 			args:             args{opts: []ClientOption{WithHTTPClient(newHTTPClient)}},
-			wantBaseURL:      "https://aur.archlinux.org/rpc.php?",
+			wantBaseURL:      "https://aur.archlinux.org/rpc/?",
 			wanthttpClient:   newHTTPClient,
 			wantErr:          false,
 			wantRequestDoers: []RequestEditorFn{},
@@ -118,7 +118,7 @@ func TestNewClient(t *testing.T) {
 		{
 			name:             "custom request editor",
 			args:             args{opts: []ClientOption{WithRequestEditorFn(customRequestEditor)}},
-			wantBaseURL:      "https://aur.archlinux.org/rpc.php?",
+			wantBaseURL:      "https://aur.archlinux.org/rpc/?",
 			wanthttpClient:   newHTTPClient,
 			wantErr:          false,
 			wantRequestDoers: []RequestEditorFn{customRequestEditor},
@@ -144,7 +144,7 @@ func Test_newAURRPCRequest(t *testing.T) {
 	values.Set("arg", "test-query")
 	got, err := newAURRPCRequest(context.Background(), _defaultURL, values)
 	assert.NoError(t, err)
-	assert.Equal(t, "https://aur.archlinux.org/rpc.php?arg=test-query&type=search&v=5", got.URL.String())
+	assert.Equal(t, "https://aur.archlinux.org/rpc/?arg=test-query&type=search&v=5", got.URL.String())
 }
 
 func Test_parseRPCResponse(t *testing.T) {
@@ -232,7 +232,7 @@ func TestClient_applyEditors_client(t *testing.T) {
 		return nil
 	}
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     http.DefaultClient,
 		RequestEditors: []RequestEditorFn{requestEditor},
 	}
@@ -251,7 +251,7 @@ func TestClient_applyEditors_extra(t *testing.T) {
 		return nil
 	}
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     http.DefaultClient,
 		RequestEditors: []RequestEditorFn{},
 	}
@@ -270,7 +270,7 @@ func TestClient_applyEditors_error(t *testing.T) {
 		return ErrServiceUnavailable
 	}
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     http.DefaultClient,
 		RequestEditors: []RequestEditorFn{},
 	}
@@ -295,7 +295,7 @@ func TestClient_Search(t *testing.T) {
 	testClient := new(MockedClient)
 
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     testClient,
 		RequestEditors: []RequestEditorFn{},
 	}
@@ -315,7 +315,7 @@ func TestClient_Search(t *testing.T) {
 	testClient.AssertExpectations(t)
 
 	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
-	assert.Equal(t, "https://aur.archlinux.org/rpc.php?arg=test&by=name&type=search&v=5",
+	assert.Equal(t, "https://aur.archlinux.org/rpc/?arg=test&by=name&type=search&v=5",
 		requestMade.URL.String())
 }
 
@@ -323,7 +323,7 @@ func TestClient_Info(t *testing.T) {
 	testClient := new(MockedClient)
 
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     testClient,
 		RequestEditors: []RequestEditorFn{},
 	}
@@ -343,7 +343,7 @@ func TestClient_Info(t *testing.T) {
 	testClient.AssertExpectations(t)
 
 	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
-	assert.Equal(t, "https://aur.archlinux.org/rpc.php?arg%5B%5D=test&type=info&v=5",
+	assert.Equal(t, "https://aur.archlinux.org/rpc/?arg%5B%5D=test&type=info&v=5",
 		requestMade.URL.String())
 }
 
@@ -351,7 +351,7 @@ func TestClient_InfoNoMatch(t *testing.T) {
 	testClient := new(MockedClient)
 
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     testClient,
 		RequestEditors: []RequestEditorFn{},
 	}
@@ -371,7 +371,7 @@ func TestClient_InfoNoMatch(t *testing.T) {
 	testClient.AssertExpectations(t)
 
 	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
-	assert.Equal(t, "https://aur.archlinux.org/rpc.php?arg%5B%5D=test&type=info&v=5",
+	assert.Equal(t, "https://aur.archlinux.org/rpc/?arg%5B%5D=test&type=info&v=5",
 		requestMade.URL.String())
 }
 
@@ -379,7 +379,7 @@ func TestClient_InfoError(t *testing.T) {
 	testClient := new(MockedClient)
 
 	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc.php?",
+		BaseURL:        "https://aur.archlinux.org/rpc/?",
 		HTTPClient:     testClient,
 		RequestEditors: []RequestEditorFn{},
 	}
@@ -397,6 +397,6 @@ func TestClient_InfoError(t *testing.T) {
 	testClient.AssertExpectations(t)
 
 	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
-	assert.Equal(t, "https://aur.archlinux.org/rpc.php?arg%5B%5D=test&type=info&v=5",
+	assert.Equal(t, "https://aur.archlinux.org/rpc/?arg%5B%5D=test&type=info&v=5",
 		requestMade.URL.String())
 }

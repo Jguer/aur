@@ -48,7 +48,7 @@ aur-cli info linux-git
 # go wrapper for the AUR JSON API
 
 Wrapper around the json API v5 for AUR found at
-http://aur.archlinux.org/rpc.php
+http://aur.archlinux.org/rpc
 
 ## LICENSE
 

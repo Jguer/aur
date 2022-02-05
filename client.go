@@ -22,7 +22,7 @@ func (r *PayloadError) Error() string {
 	return fmt.Sprintf("status %d: %s", r.StatusCode, r.ErrorField)
 }
 
-const _defaultURL = "https://aur.archlinux.org/rpc.php?"
+const _defaultURL = "https://aur.archlinux.org/rpc/?"
 
 // ClientInterface specification for the AUR client.
 type ClientInterface interface {
@@ -78,14 +78,14 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 		client.HTTPClient = http.DefaultClient
 	}
 
-	// ensure base URL has /rpc.php?
-	if !strings.HasSuffix(client.BaseURL, "rpc.php?") {
+	// ensure base URL has /rpc?
+	if !strings.HasSuffix(client.BaseURL, "rpc/?") {
 		// ensure the server URL always has a trailing slash
 		if !strings.HasSuffix(client.BaseURL, "/") {
 			client.BaseURL += "/"
 		}
 
-		client.BaseURL += "rpc.php?"
+		client.BaseURL += "rpc/?"
 	}
 
 	return &client, nil
