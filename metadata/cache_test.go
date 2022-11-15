@@ -14,7 +14,6 @@ import (
 )
 
 func TestClientneedsUpdate(t *testing.T) {
-	t.Parallel()
 	dir := t.TempDir()
 	cacheFilePath := dir + "/cache.json"
 
