@@ -36,6 +36,10 @@ type Pkg struct {
 	Keywords       []string `json:"Keywords"`
 }
 
+func (p *Pkg) String() string {
+	return p.Name
+}
+
 // By specifies what to search by in RPC searches.
 type By int
 

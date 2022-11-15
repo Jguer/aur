@@ -3,7 +3,7 @@ module github.com/Jguer/aur
 go 1.16
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/stretchr/testify v1.7.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	github.com/itchyny/gojq v0.12.9
+	github.com/ohler55/ojg v1.14.5
+	github.com/stretchr/testify v1.8.1
 )
