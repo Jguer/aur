@@ -18,22 +18,33 @@ type HTTPRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+func (c *Client) applyEditors(ctx context.Context, req *http.Request) error {
+	for _, r := range c.requestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // needsUpdate checks if cachepath is older than 24 hours.
-func (a *AURCacheClient) needsUpdate() (bool, error) {
+func (a *Client) needsUpdate() (bool, error) {
 	// check if cache is older than 24 hours
-	info, err := os.Stat(a.cachePath)
+	info, err := os.Stat(a.cacheFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return true, nil
 		}
 
 		return false, fmt.Errorf("unable to read cache: %w", err)
+
 	}
 
-	return info.ModTime().Before(time.Now().Add(-cacheValidity)), nil
+	return info.ModTime().Before(time.Now().Add(-a.cacheValidity)), nil
 }
 
-func (a *AURCacheClient) cache(ctx context.Context) ([]interface{}, error) {
+func (a *Client) cache(ctx context.Context) ([]any, error) {
 	if a.unmarshalledCache != nil {
 		return a.unmarshalledCache, nil
 	}
@@ -44,8 +55,8 @@ func (a *AURCacheClient) cache(ctx context.Context) ([]interface{}, error) {
 	}
 
 	if update {
-		if a.DebugLoggerFn != nil {
-			a.DebugLoggerFn("AUR Cache is out of date, updating")
+		if a.debugLoggerFn != nil {
+			a.debugLoggerFn("AUR Cache is out of date, updating")
 		}
 		cache, makeErr := a.makeCache(ctx)
 		if makeErr != nil {
@@ -57,9 +68,9 @@ func (a *AURCacheClient) cache(ctx context.Context) ([]interface{}, error) {
 			return nil, fmt.Errorf("aur metadata unable to parse cache: %w", unmarshallErr)
 		}
 
-		a.unmarshalledCache = inputStruct.([]interface{})
+		a.unmarshalledCache = inputStruct.([]any)
 	} else {
-		aurCache, err := readCache(a.cachePath)
+		aurCache, err := readCache(a.cacheFilePath)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +80,7 @@ func (a *AURCacheClient) cache(ctx context.Context) ([]interface{}, error) {
 			return nil, fmt.Errorf("aur metadata unable to parse cache: %w", err)
 		}
 
-		a.unmarshalledCache = inputStruct.([]interface{})
+		a.unmarshalledCache = inputStruct.([]any)
 	}
 
 	return a.unmarshalledCache, nil
@@ -98,7 +109,7 @@ func readCache(cachePath string) ([]byte, error) {
 // Download the metadata for aur packages.
 // create cache file
 // write to cache file.
-func (a *AURCacheClient) makeCache(ctx context.Context) ([]byte, error) {
+func (a *Client) makeCache(ctx context.Context) ([]byte, error) {
 	body, err := a.downloadAURMetadata(ctx)
 	if err != nil {
 		return nil, err
@@ -110,7 +121,7 @@ func (a *AURCacheClient) makeCache(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 
-	f, err := os.Create(a.cachePath)
+	f, err := os.Create(a.cacheFilePath)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +134,7 @@ func (a *AURCacheClient) makeCache(ctx context.Context) ([]byte, error) {
 	return s, err
 }
 
-func (a *AURCacheClient) downloadAURMetadata(ctx context.Context) (io.ReadCloser, error) {
+func (a *Client) downloadAURMetadata(ctx context.Context) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", path.Join(a.baseURL, endpoint), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)

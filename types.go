@@ -52,6 +52,7 @@ const (
 	OptDepends
 	CheckDepends
 	None
+	Provides
 )
 
 func (by By) String() string {
@@ -72,6 +73,8 @@ func (by By) String() string {
 		return "checkdepends"
 	case None:
 		return ""
+	case Provides:
+		panic("unsupported by RPC engine")
 	default:
 		panic("invalid By")
 	}
