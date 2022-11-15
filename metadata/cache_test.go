@@ -57,6 +57,34 @@ func (m *MockHTTP) Do(req *http.Request) (*http.Response, error) {
 	}, nil
 }
 
+func TestClientAssertEndpointCalled(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	cacheFilePath := dir + "/cache.json"
+
+	// read test.json
+	testBytes, err := os.ReadFile("test.json")
+	require.NoError(t, err)
+
+	client, err := New(
+		WithCacheFilePath(cacheFilePath),
+		WithBaseURL("https://alternative.aur.org"),
+		WithHTTPClient(&MockHTTP{bytesToReturn: testBytes}),
+		WithRequestEditorFn(func(ctx context.Context, req *http.Request) error {
+			assert.Equal(t, "https://alternative.aur.org/packages-meta-ext-v1.json.gz", req.URL.String())
+			req.Header.Add("User-Agent", "test")
+			return nil
+		},
+		))
+
+	require.NoError(t, err)
+	ctx := context.Background()
+
+	// cache file does not exist
+	_, err = client.makeCache(ctx)
+	require.NoError(t, err)
+}
+
 func TestClientMakeCache(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

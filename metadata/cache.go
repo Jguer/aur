@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
-	"path"
 	"time"
 
 	"github.com/ohler55/ojg/oj"
@@ -134,7 +134,12 @@ func (a *Client) applyEditors(ctx context.Context, req *http.Request) error {
 }
 
 func (a *Client) downloadAURMetadata(ctx context.Context) (io.ReadCloser, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", path.Join(a.baseURL, endpoint), http.NoBody)
+	reqURL, err := url.JoinPath(a.baseURL, endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
