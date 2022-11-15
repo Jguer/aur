@@ -14,6 +14,7 @@ import (
 )
 
 func TestClientneedsUpdate(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	cacheFilePath := dir + "/cache.json"
 
@@ -27,8 +28,9 @@ func TestClientneedsUpdate(t *testing.T) {
 
 	// cache file exists and is new
 	// touch file
-	_, err = os.Create(cacheFilePath)
+	f, err := os.Create(cacheFilePath)
 	require.NoError(t, err)
+	f.Close()
 
 	needs, err = client.needsUpdate()
 	require.NoError(t, err)
