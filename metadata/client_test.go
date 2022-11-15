@@ -60,5 +60,4 @@ func TestClientCreationWithInvalidCachePath(t *testing.T) {
 
 	_, err = New(WithCacheFilePath(dir))
 	assert.Error(t, err)
-
 }

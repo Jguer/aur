@@ -3,7 +3,7 @@ package aur
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"testing"
@@ -162,7 +162,7 @@ func Test_parseRPCResponse(t *testing.T) {
 			name: "service unavailable",
 			args: args{resp: &http.Response{
 				StatusCode: 503,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("{}")),
+				Body:       io.NopCloser(bytes.NewBufferString("{}")),
 			}},
 			want:       []Pkg{},
 			wantErr:    true,
@@ -172,7 +172,7 @@ func Test_parseRPCResponse(t *testing.T) {
 			name: "ok empty body",
 			args: args{resp: &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("{}")),
+				Body:       io.NopCloser(bytes.NewBufferString("{}")),
 			}},
 			want:       nil,
 			wantErr:    false,
@@ -182,7 +182,7 @@ func Test_parseRPCResponse(t *testing.T) {
 			name: "ok empty body",
 			args: args{resp: &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewBufferString("{}")),
+				Body:       io.NopCloser(bytes.NewBufferString("{}")),
 			}},
 			want:       nil,
 			wantErr:    false,
@@ -192,7 +192,7 @@ func Test_parseRPCResponse(t *testing.T) {
 			name: "payload error",
 			args: args{resp: &http.Response{
 				StatusCode: 400,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(errorPayload)),
+				Body:       io.NopCloser(bytes.NewBufferString(errorPayload)),
 			}},
 			want:       nil,
 			wantErr:    true,
@@ -202,7 +202,7 @@ func Test_parseRPCResponse(t *testing.T) {
 			name: "valid payload",
 			args: args{resp: &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(bytes.NewBufferString(validPayload)),
+				Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 			}},
 			want:       validPayloadItems,
 			wantErr:    false,
@@ -302,7 +302,7 @@ func TestClient_Search(t *testing.T) {
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(validPayload)),
+		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil)
 
 	got, err := c.Search(context.Background(), "test", Name)
@@ -330,7 +330,7 @@ func TestClient_Info(t *testing.T) {
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(validPayload)),
+		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil)
 
 	got, err := c.Info(context.Background(), []string{"test"})
@@ -358,7 +358,7 @@ func TestClient_InfoNoMatch(t *testing.T) {
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(noMatchPayload)),
+		Body:       io.NopCloser(bytes.NewBufferString(noMatchPayload)),
 	}, nil)
 
 	got, err := c.Info(context.Background(), []string{"test"})
@@ -386,7 +386,7 @@ func TestClient_InfoError(t *testing.T) {
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
 		StatusCode: 503,
-		Body:       ioutil.NopCloser(bytes.NewBufferString(errorPayload)),
+		Body:       io.NopCloser(bytes.NewBufferString(errorPayload)),
 	}, nil)
 
 	_, err := c.Info(context.Background(), []string{"test"})

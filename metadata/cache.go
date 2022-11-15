@@ -18,16 +18,6 @@ type HTTPRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-func (c *Client) applyEditors(ctx context.Context, req *http.Request) error {
-	for _, r := range c.requestEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 // needsUpdate checks if cachepath is older than 24 hours.
 func (a *Client) needsUpdate() (bool, error) {
 	// check if cache is older than 24 hours
@@ -38,7 +28,6 @@ func (a *Client) needsUpdate() (bool, error) {
 		}
 
 		return false, fmt.Errorf("unable to read cache: %w", err)
-
 	}
 
 	return info.ModTime().Before(time.Now().Add(-a.cacheValidity)), nil
@@ -134,10 +123,24 @@ func (a *Client) makeCache(ctx context.Context) ([]byte, error) {
 	return s, err
 }
 
+func (a *Client) applyEditors(ctx context.Context, req *http.Request) error {
+	for _, r := range a.requestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (a *Client) downloadAURMetadata(ctx context.Context) (io.ReadCloser, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", path.Join(a.baseURL, endpoint), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	if errE := a.applyEditors(ctx, req); errE != nil {
+		return nil, errE
 	}
 
 	resp, err := a.httpClient.Do(req)
