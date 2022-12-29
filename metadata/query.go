@@ -18,8 +18,8 @@ type AURQuery struct {
 }
 
 // Get returns a list of packages that provide the given search term.
-func (a *Client) Get(ctx context.Context, query *AURQuery) ([]*aur.Pkg, error) {
-	found := make([]*aur.Pkg, 0, len(query.Needles))
+func (a *Client) Get(ctx context.Context, query *AURQuery) ([]aur.Pkg, error) {
+	found := make([]aur.Pkg, 0, len(query.Needles))
 	if len(query.Needles) == 0 {
 		return found, nil
 	}
@@ -34,7 +34,7 @@ func (a *Client) Get(ctx context.Context, query *AURQuery) ([]*aur.Pkg, error) {
 	return found, nil
 }
 
-func (a *Client) gojqGetBatch(ctx context.Context, query *AURQuery) ([]*aur.Pkg, error) {
+func (a *Client) gojqGetBatch(ctx context.Context, query *AURQuery) ([]aur.Pkg, error) {
 	pattern := ".[] | select("
 
 	for i, searchTerm := range query.Needles {
@@ -72,7 +72,7 @@ func (a *Client) gojqGetBatch(ctx context.Context, query *AURQuery) ([]*aur.Pkg,
 		return nil, errCache
 	}
 
-	final := make([]*aur.Pkg, 0, len(query.Needles))
+	final := make([]aur.Pkg, 0, len(query.Needles))
 	iter := parsed.RunWithContext(ctx, unmarshalledCache) // or query.RunWithContext
 	dedup := make(map[string]bool)
 
@@ -88,14 +88,14 @@ func (a *Client) gojqGetBatch(ctx context.Context, query *AURQuery) ([]*aur.Pkg,
 
 		dedup[name] = true
 
-		pkg := new(aur.Pkg)
+		pkg := aur.Pkg{}
 
 		bValue, err := gojq.Marshal(pkgMap)
 		if err != nil {
 			return nil, fmt.Errorf("unable to marshal aur package: %w", err)
 		}
 
-		errU := oj.Unmarshal(bValue, pkg)
+		errU := oj.Unmarshal(bValue, &pkg)
 		if errU != nil {
 			return nil, fmt.Errorf("unable to unmarshal aur package: %w", errU)
 		}

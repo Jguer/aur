@@ -3,7 +3,7 @@ module github.com/Jguer/aur
 go 1.19
 
 require (
-	github.com/itchyny/gojq v0.12.10
+	github.com/itchyny/gojq v0.12.11
 	github.com/ohler55/ojg v1.15.0
 	github.com/stretchr/testify v1.8.1
 )
