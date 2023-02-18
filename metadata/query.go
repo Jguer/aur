@@ -11,14 +11,8 @@ import (
 
 const joiner = " or "
 
-type AURQuery struct {
-	Needles  []string
-	By       aur.By
-	Contains bool // if true, search for packages containing the needle, not exact matches
-}
-
 // Get returns a list of packages that provide the given search term.
-func (a *Client) Get(ctx context.Context, query *AURQuery) ([]aur.Pkg, error) {
+func (a *Client) Get(ctx context.Context, query *aur.Query) ([]aur.Pkg, error) {
 	found := make([]aur.Pkg, 0, len(query.Needles))
 	if len(query.Needles) == 0 {
 		return found, nil
@@ -34,7 +28,7 @@ func (a *Client) Get(ctx context.Context, query *AURQuery) ([]aur.Pkg, error) {
 	return found, nil
 }
 
-func (a *Client) gojqGetBatch(ctx context.Context, query *AURQuery) ([]aur.Pkg, error) {
+func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg, error) {
 	pattern := ".[] | select("
 
 	for i, searchTerm := range query.Needles {

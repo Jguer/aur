@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Jguer/aur"
+	"github.com/Jguer/aur/rpc"
 )
 
 const (
@@ -99,8 +100,8 @@ func main() {
 
 	mode := flag.Arg(0)
 
-	aurClient, err := aur.NewClient(aur.WithBaseURL(aurURL),
-		aur.WithRequestEditorFn(versionRequestEditor))
+	aurClient, err := rpc.NewClient(rpc.WithBaseURL(aurURL),
+		rpc.WithRequestEditorFn(versionRequestEditor))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
@@ -136,7 +137,7 @@ func main() {
 	}
 }
 
-func getResults(aurClient *aur.Client, by, mode string) ([]aur.Pkg, error) {
+func getResults(aurClient *rpc.Client, by, mode string) ([]aur.Pkg, error) {
 	var (
 		results []aur.Pkg
 		err     error
@@ -144,9 +145,11 @@ func getResults(aurClient *aur.Client, by, mode string) ([]aur.Pkg, error) {
 
 	switch mode {
 	case searchMode:
-		results, err = aurClient.Search(context.Background(), strings.Join(flag.Args()[1:], " "), getSearchBy(by))
+		results, err = aurClient.Get(context.Background(), &aur.Query{
+			Needles: flag.Args()[1:], By: getSearchBy(by),
+		})
 	case infoMode:
-		results, err = aurClient.Info(context.Background(), flag.Args()[1:])
+		results, err = aurClient.Get(context.Background(), &aur.Query{Needles: flag.Args()[1:]})
 	default:
 		usage()
 		os.Exit(1)

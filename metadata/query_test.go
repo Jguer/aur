@@ -34,7 +34,7 @@ func TestGet(t *testing.T) {
 
 	type testcase struct {
 		desc          string
-		query         *AURQuery
+		query         *aur.Query
 		expectedNames []string
 		wantPanic     bool
 	}
@@ -42,7 +42,7 @@ func TestGet(t *testing.T) {
 	tests := []testcase{
 		{
 			desc: "single package",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Name,
 				Needles:  []string{"jack-audio-tools-lv2"},
 				Contains: false,
@@ -51,7 +51,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "single package - known contains",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Name,
 				Needles:  []string{"yay"},
 				Contains: false,
@@ -60,7 +60,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "starts-with",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Name,
 				Needles:  []string{"jack-audio"},
 				Contains: true,
@@ -74,7 +74,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "contains",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Name,
 				Needles:  []string{"tools"},
 				Contains: true,
@@ -88,7 +88,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "None", // Name + Provides
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.None,
 				Needles:  []string{"yay"},
 				Contains: true,
@@ -101,7 +101,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Provides",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Provides,
 				Needles:  []string{"yay"},
 				Contains: false,
@@ -113,7 +113,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "None - Wireguard", // Name + Provides
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.None,
 				Needles:  []string{"WIREGUARD-MODULE"},
 				Contains: false,
@@ -122,7 +122,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Maintainer",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Maintainer,
 				Needles:  []string{"jguer"},
 				Contains: false,
@@ -135,7 +135,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Submitter",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Submitter,
 				Needles:  []string{"submitter"},
 				Contains: false,
@@ -144,7 +144,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "CheckDepends",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.CheckDepends,
 				Needles:  []string{"lv2lint"},
 				Contains: false,
@@ -153,7 +153,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "CheckDepends",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.OptDepends,
 				Needles:  []string{"libjack.so"},
 				Contains: false,
@@ -162,7 +162,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Depends",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Depends,
 				Needles:  []string{"kmod"},
 				Contains: false,
@@ -171,7 +171,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "MakeDepends",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.MakeDepends,
 				Needles:  []string{"pahole"},
 				Contains: false,
@@ -180,7 +180,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "NameDeps",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.NameDesc,
 				Needles:  []string{"Pre-compiled"},
 				Contains: true,
@@ -189,7 +189,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Conflicts",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Conflicts,
 				Needles:  []string{"conflicts1"},
 				Contains: false,
@@ -198,7 +198,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Replaces",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Replaces,
 				Needles:  []string{"replaces1"},
 				Contains: false,
@@ -207,7 +207,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Keywords",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Keywords,
 				Needles:  []string{"keyword1"},
 				Contains: false,
@@ -216,7 +216,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Groups",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.Groups,
 				Needles:  []string{"group1"},
 				Contains: false,
@@ -225,7 +225,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "CoMaintainers",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       aur.CoMaintainers,
 				Needles:  []string{"comaintainer1"},
 				Contains: false,
@@ -234,7 +234,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			desc: "Panic",
-			query: &AURQuery{
+			query: &aur.Query{
 				By:       -10, // unsupported
 				Needles:  []string{"prep"},
 				Contains: true,
@@ -258,7 +258,7 @@ func TestGet(t *testing.T) {
 
 			var names []string
 			for _, pkg := range pkgs {
-				names = append(names, pkg.Name)
+				names = append(names, pkg.String())
 			}
 
 			assert.Len(t, pkgs, len(test.expectedNames))

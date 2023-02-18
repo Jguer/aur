@@ -1,4 +1,4 @@
-package aur
+package rpc
 
 import (
 	"bytes"
@@ -8,8 +8,10 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/Jguer/aur"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const errorPayload = `{"version":5,"type":"error","resultcount":0,
@@ -55,7 +57,7 @@ const validPayload = `{
  }
 `
 
-var validPayloadItems = []Pkg{{
+var validPayloadItems = []aur.Pkg{{
 	ID: 229417, Name: "cower", PackageBaseID: 44921,
 	PackageBase: "cower", Version: "14-2", Description: "A simple AUR agent with a pretentious name",
 	URL: "http://github.com/falconindy/cower", NumVotes: 590, Popularity: 24.595536, OutOfDate: 0,
@@ -65,79 +67,6 @@ var validPayloadItems = []Pkg{{
 	Provides: []string(nil), Replaces: []string(nil), OptDepends: []string(nil),
 	Groups: []string(nil), License: []string{"MIT"}, Keywords: []string{}, CoMaintainers: []string(nil),
 }}
-
-func TestNewClient(t *testing.T) {
-	newHTTPClient := &http.Client{}
-
-	customRequestEditor := func(ctx context.Context, req *http.Request) error {
-		return nil
-	}
-
-	type args struct {
-		opts []ClientOption
-	}
-	tests := []struct {
-		name             string
-		args             args
-		wantBaseURL      string
-		wanthttpClient   *http.Client
-		wantRequestDoers []RequestEditorFn
-		wantErr          bool
-	}{
-		{
-			name:             "default",
-			args:             args{opts: []ClientOption{}},
-			wantBaseURL:      "https://aur.archlinux.org/rpc?",
-			wanthttpClient:   http.DefaultClient,
-			wantErr:          false,
-			wantRequestDoers: []RequestEditorFn{},
-		},
-		{
-			name:             "custom base url",
-			args:             args{opts: []ClientOption{WithBaseURL("localhost:8000")}},
-			wantBaseURL:      "localhost:8000/rpc?",
-			wanthttpClient:   http.DefaultClient,
-			wantErr:          false,
-			wantRequestDoers: []RequestEditorFn{},
-		},
-		{
-			name:             "custom base url complete",
-			args:             args{opts: []ClientOption{WithBaseURL("localhost:8000/rpc?")}},
-			wantBaseURL:      "localhost:8000/rpc?",
-			wanthttpClient:   http.DefaultClient,
-			wantErr:          false,
-			wantRequestDoers: []RequestEditorFn{},
-		},
-		{
-			name:             "custom http client",
-			args:             args{opts: []ClientOption{WithHTTPClient(newHTTPClient)}},
-			wantBaseURL:      "https://aur.archlinux.org/rpc?",
-			wanthttpClient:   newHTTPClient,
-			wantErr:          false,
-			wantRequestDoers: []RequestEditorFn{},
-		},
-		{
-			name:             "custom request editor",
-			args:             args{opts: []ClientOption{WithRequestEditorFn(customRequestEditor)}},
-			wantBaseURL:      "https://aur.archlinux.org/rpc?",
-			wanthttpClient:   newHTTPClient,
-			wantErr:          false,
-			wantRequestDoers: []RequestEditorFn{customRequestEditor},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewClient(tt.args.opts...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewClient() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			assert.Equal(t, tt.wantBaseURL, got.BaseURL)
-			assert.Equal(t, tt.wanthttpClient, got.HTTPClient)
-			assert.Equal(t, len(tt.wantRequestDoers), len(got.RequestEditors))
-		})
-	}
-}
 
 func Test_newAURRPCRequest(t *testing.T) {
 	values := url.Values{}
@@ -155,7 +84,7 @@ func Test_parseRPCResponse(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       args
-		want       []Pkg
+		want       []aur.Pkg
 		wantErr    bool
 		wantErrMsg string
 	}{
@@ -165,7 +94,7 @@ func Test_parseRPCResponse(t *testing.T) {
 				StatusCode: 503,
 				Body:       io.NopCloser(bytes.NewBufferString("{}")),
 			}},
-			want:       []Pkg{},
+			want:       []aur.Pkg{},
 			wantErr:    true,
 			wantErrMsg: "AUR is unavailable at this moment",
 		},
@@ -227,61 +156,6 @@ func Test_parseRPCResponse(t *testing.T) {
 	}
 }
 
-func TestClient_applyEditors_client(t *testing.T) {
-	requestEditor := func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("test", "value-test")
-		return nil
-	}
-	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc?",
-		HTTPClient:     http.DefaultClient,
-		RequestEditors: []RequestEditorFn{requestEditor},
-	}
-
-	req := &http.Request{Header: http.Header{}}
-
-	err := c.applyEditors(context.Background(), req, []RequestEditorFn{})
-
-	assert.NoError(t, err)
-	assert.Equal(t, "value-test", req.Header.Get("test"))
-}
-
-func TestClient_applyEditors_extra(t *testing.T) {
-	requestEditor := func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("test", "value-test")
-		return nil
-	}
-	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc?",
-		HTTPClient:     http.DefaultClient,
-		RequestEditors: []RequestEditorFn{},
-	}
-
-	req := &http.Request{Header: http.Header{}}
-
-	err := c.applyEditors(context.Background(), req, []RequestEditorFn{requestEditor})
-
-	assert.NoError(t, err)
-	assert.Equal(t, "value-test", req.Header.Get("test"))
-}
-
-func TestClient_applyEditors_error(t *testing.T) {
-	requestEditor := func(ctx context.Context, req *http.Request) error {
-		req.Header.Set("test", "value-test")
-		return ErrServiceUnavailable
-	}
-	c := &Client{
-		BaseURL:        "https://aur.archlinux.org/rpc?",
-		HTTPClient:     http.DefaultClient,
-		RequestEditors: []RequestEditorFn{},
-	}
-
-	req := &http.Request{Header: http.Header{}}
-
-	err := c.applyEditors(context.Background(), req, []RequestEditorFn{requestEditor})
-	assert.Error(t, err)
-}
-
 type MockedClient struct {
 	mock.Mock
 }
@@ -298,7 +172,7 @@ func TestClient_Search(t *testing.T) {
 	c := &Client{
 		BaseURL:        "https://aur.archlinux.org/rpc?",
 		HTTPClient:     testClient,
-		RequestEditors: []RequestEditorFn{},
+		RequestEditors: []aur.RequestEditorFn{},
 	}
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
@@ -306,7 +180,7 @@ func TestClient_Search(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil)
 
-	got, err := c.Search(context.Background(), "test", Name)
+	got, err := c.Search(context.Background(), "test", aur.Name)
 
 	assert.NoError(t, err)
 
@@ -326,7 +200,7 @@ func TestClient_Info(t *testing.T) {
 	c := &Client{
 		BaseURL:        "https://aur.archlinux.org/rpc?",
 		HTTPClient:     testClient,
-		RequestEditors: []RequestEditorFn{},
+		RequestEditors: []aur.RequestEditorFn{},
 	}
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
@@ -348,13 +222,40 @@ func TestClient_Info(t *testing.T) {
 		requestMade.URL.String())
 }
 
+func TestClient_GetInfo(t *testing.T) {
+	testClient := new(MockedClient)
+
+	c, err := NewClient(WithHTTPClient(testClient))
+	require.NoError(t, err)
+
+	testClient.On("Do", mock.Anything).Return(&http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
+	}, nil)
+
+	got, err := c.Get(context.Background(), &aur.Query{
+		Needles: []string{"test"},
+	})
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, validPayloadItems, got)
+
+	testClient.AssertNumberOfCalls(t, "Do", 1)
+	testClient.AssertExpectations(t)
+
+	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
+	assert.Equal(t, "https://aur.archlinux.org/rpc?arg%5B%5D=test&type=info&v=5",
+		requestMade.URL.String())
+}
+
 func TestClient_InfoNoMatch(t *testing.T) {
 	testClient := new(MockedClient)
 
 	c := &Client{
 		BaseURL:        "https://aur.archlinux.org/rpc?",
 		HTTPClient:     testClient,
-		RequestEditors: []RequestEditorFn{},
+		RequestEditors: []aur.RequestEditorFn{},
 	}
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
@@ -366,7 +267,7 @@ func TestClient_InfoNoMatch(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	assert.Equal(t, []Pkg{}, got)
+	assert.Equal(t, []aur.Pkg{}, got)
 
 	testClient.AssertNumberOfCalls(t, "Do", 1)
 	testClient.AssertExpectations(t)
@@ -382,7 +283,7 @@ func TestClient_InfoError(t *testing.T) {
 	c := &Client{
 		BaseURL:        "https://aur.archlinux.org/rpc?",
 		HTTPClient:     testClient,
-		RequestEditors: []RequestEditorFn{},
+		RequestEditors: []aur.RequestEditorFn{},
 	}
 
 	testClient.On("Do", mock.Anything).Return(&http.Response{
@@ -392,12 +293,79 @@ func TestClient_InfoError(t *testing.T) {
 
 	_, err := c.Info(context.Background(), []string{"test"})
 
-	assert.ErrorIs(t, ErrServiceUnavailable, err)
+	assert.ErrorIs(t, aur.ErrServiceUnavailable, err)
 
 	testClient.AssertNumberOfCalls(t, "Do", 1)
 	testClient.AssertExpectations(t)
 
 	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
 	assert.Equal(t, "https://aur.archlinux.org/rpc?arg%5B%5D=test&type=info&v=5",
+		requestMade.URL.String())
+}
+
+func TestClient_Get(t *testing.T) {
+	testClient := new(MockedClient)
+
+	c, err := NewClient(WithHTTPClient(testClient), WithBatchSize(10))
+	require.NoError(t, err)
+
+	testClient.On("Do", mock.Anything).Return(&http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
+	}, nil).Once()
+
+	testClient.On("Do", mock.Anything).Return(&http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
+	}, nil).Once()
+
+	got, err := c.Get(context.Background(), &aur.Query{
+		By:       aur.Name,
+		Contains: true,
+		Needles:  []string{"test"},
+	})
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, validPayloadItems, got)
+
+	testClient.AssertNumberOfCalls(t, "Do", 2)
+	testClient.AssertExpectations(t)
+
+	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
+	assert.Equal(t, "https://aur.archlinux.org/rpc?arg=test&by=name&type=search&v=5",
+		requestMade.URL.String())
+
+	requestMadeInfo := testClient.Calls[1].Arguments.Get(0).(*http.Request)
+	assert.Equal(t, "https://aur.archlinux.org/rpc?arg%5B%5D=cower&type=info&v=5",
+		requestMadeInfo.URL.String())
+}
+
+func TestClient_NoBatch(t *testing.T) {
+	testClient := new(MockedClient)
+
+	c, err := NewClient(WithHTTPClient(testClient), WithBatchSize(0))
+	require.NoError(t, err)
+
+	testClient.On("Do", mock.Anything).Return(&http.Response{
+		StatusCode: 200,
+		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
+	}, nil).Once()
+
+	got, err := c.Get(context.Background(), &aur.Query{
+		By:       aur.Name,
+		Contains: true,
+		Needles:  []string{"test"},
+	})
+
+	assert.NoError(t, err)
+
+	assert.Equal(t, validPayloadItems, got)
+
+	testClient.AssertNumberOfCalls(t, "Do", 1)
+	testClient.AssertExpectations(t)
+
+	requestMade := testClient.Calls[0].Arguments.Get(0).(*http.Request)
+	assert.Equal(t, "https://aur.archlinux.org/rpc?arg=test&by=name&type=search&v=5",
 		requestMade.URL.String())
 }

@@ -1,13 +1,5 @@
 package aur
 
-type response struct {
-	Error       string `json:"error"`
-	Type        string `json:"type"`
-	Version     int    `json:"version"`
-	ResultCount int    `json:"resultcount"`
-	Results     []Pkg  `json:"results"`
-}
-
 // Pkg holds package information.
 type Pkg struct {
 	ID             int      `json:"ID"`
