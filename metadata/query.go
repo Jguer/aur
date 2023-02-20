@@ -105,9 +105,9 @@ func toSearchBy(by aur.By) []string {
 	case aur.NameDesc:
 		return []string{"Name", "Description"}
 	case aur.None:
-		return []string{"Name", "Provides[]?"}
+		return []string{"Name", "Description"}
 	case aur.Provides:
-		return []string{"Provides[]?"}
+		return []string{"Name", "Provides[]?"}
 	case aur.Maintainer:
 		return []string{"Maintainer"}
 	case aur.Submitter:
