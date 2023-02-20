@@ -107,6 +107,7 @@ func TestGet(t *testing.T) {
 				Contains: false,
 			},
 			expectedNames: []string{
+				"yay",
 				"yay-bin",
 				"yay-git",
 			},
@@ -118,7 +119,7 @@ func TestGet(t *testing.T) {
 				Needles:  []string{"WIREGUARD-MODULE"},
 				Contains: false,
 			},
-			expectedNames: []string{"linux-amd-git", "linux-ath-dfs"},
+			expectedNames: []string{},
 		},
 		{
 			desc: "Maintainer",
