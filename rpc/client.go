@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -9,6 +10,16 @@ import (
 
 const _defaultURL = "https://aur.archlinux.org/rpc?"
 const defaultBatchSize = 125
+
+type ClientInterface interface {
+	aur.QueryClient
+	// Search queries the AUR DB with an optional By filter.
+	// Use By.None for default query param (name-desc)
+	Search(ctx context.Context, query string, by aur.By, reqEditors ...aur.RequestEditorFn) ([]aur.Pkg, error)
+
+	// Info gives detailed information on existing package.
+	Info(ctx context.Context, pkgs []string, reqEditors ...aur.RequestEditorFn) ([]aur.Pkg, error)
+}
 
 // Client for AUR searching and querying.
 type Client struct {
