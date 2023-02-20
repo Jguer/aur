@@ -8,6 +8,8 @@ require (
 	github.com/stretchr/testify v1.8.1
 )
 
+require github.com/mitchellh/mapstructure v1.5.0
+
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect

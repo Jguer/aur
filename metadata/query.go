@@ -6,7 +6,7 @@ import (
 
 	"github.com/Jguer/aur"
 	"github.com/itchyny/gojq"
-	"github.com/ohler55/ojg/oj"
+	"github.com/mitchellh/mapstructure"
 )
 
 const joiner = " or "
@@ -83,15 +83,9 @@ func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg,
 		dedup[name] = true
 
 		pkg := aur.Pkg{}
-
-		bValue, err := gojq.Marshal(pkgMap)
-		if err != nil {
-			return nil, fmt.Errorf("unable to marshal aur package: %w", err)
-		}
-
-		errU := oj.Unmarshal(bValue, &pkg)
+		errU := mapstructure.Decode(pkgMap, &pkg)
 		if errU != nil {
-			return nil, fmt.Errorf("unable to unmarshal aur package: %w", errU)
+			return nil, fmt.Errorf("unable to decode aur package: %w: %+v", errU, pkgMap.(map[string]interface{}))
 		}
 
 		final = append(final, pkg)
