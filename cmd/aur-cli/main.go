@@ -101,7 +101,9 @@ func main() {
 	mode := flag.Arg(0)
 
 	aurClient, err := rpc.NewClient(rpc.WithBaseURL(aurURL),
-		rpc.WithRequestEditorFn(versionRequestEditor))
+		rpc.WithRequestEditorFn(versionRequestEditor), rpc.WithLogFn(func(s ...any) {
+			fmt.Fprintln(os.Stdout, append([]any{"[DEBUG]"}, s...)...)
+		}))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
@@ -146,7 +148,7 @@ func getResults(aurClient *rpc.Client, by, mode string) ([]aur.Pkg, error) {
 	switch mode {
 	case searchMode:
 		results, err = aurClient.Get(context.Background(), &aur.Query{
-			Needles: flag.Args()[1:], By: getSearchBy(by),
+			Needles: flag.Args()[1:], By: getSearchBy(by), Contains: true,
 		})
 	case infoMode:
 		results, err = aurClient.Get(context.Background(), &aur.Query{Needles: flag.Args()[1:]})

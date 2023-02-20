@@ -38,7 +38,7 @@ func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg,
 
 		bys := toSearchBy(query.By)
 		for j, by := range bys {
-			if query.Contains {
+			if query.Contains && query.By != aur.Provides {
 				pattern += fmt.Sprintf("(.%s // empty | test(%q))", by, searchTerm)
 			} else {
 				pattern += fmt.Sprintf("(.%s == %q)", by, searchTerm)
