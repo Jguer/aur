@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Jguer/aur"
+	"github.com/itchyny/gojq"
 )
 
 const (
@@ -24,6 +25,7 @@ type Client struct {
 	debugLoggerFn  LogFn
 
 	unmarshalledCache []any
+	codeCache         map[string]*gojq.Code
 }
 
 // ClientOption allows setting custom parameters during construction.
@@ -39,6 +41,7 @@ func New(opts ...ClientOption) (*Client, error) {
 		cacheFilePath:     "",
 		debugLoggerFn:     nil,
 		unmarshalledCache: nil,
+		codeCache:         map[string]*gojq.Code{},
 	}
 
 	// mutate client and add all optional params

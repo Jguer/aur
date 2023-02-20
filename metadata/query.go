@@ -28,15 +28,24 @@ func (a *Client) Get(ctx context.Context, query *aur.Query) ([]aur.Pkg, error) {
 	return found, nil
 }
 
-func (a *Client) gojqGet(ctx context.Context, needle string, contains bool, by aur.By) (gojq.Iter, error) {
+func codeCacheKey(by aur.By, contains bool) string {
+	return fmt.Sprintf("%s-%t", by, contains)
+}
+
+func (a *Client) getPattern(by aur.By, contains bool) (*gojq.Code, error) {
+	key := codeCacheKey(by, contains)
+	if code, ok := a.codeCache[key]; ok {
+		return code, nil
+	}
+
 	pattern := ".[] | select("
 
 	bys := toSearchBy(by)
 	for j, byString := range bys {
 		if contains && by != aur.Provides {
-			pattern += fmt.Sprintf("(.%s // empty | test(%q))", byString, needle)
+			pattern += fmt.Sprintf("(.%s // empty | test($x))", byString)
 		} else {
-			pattern += fmt.Sprintf("(.%s == %q)", byString, needle)
+			pattern += fmt.Sprintf("(.%s == $x)", byString)
 		}
 
 		if j != len(bys)-1 {
@@ -51,9 +60,27 @@ func (a *Client) gojqGet(ctx context.Context, needle string, contains bool, by a
 		return nil, fmt.Errorf("unable to parse query: %w", err)
 	}
 
-	compiled, err := gojq.Compile(parsed)
+	compiled, err := gojq.Compile(
+		parsed,
+		gojq.WithVariables([]string{
+			"$x",
+		}))
 	if err != nil {
 		return nil, fmt.Errorf("unable to compile query: %w", err)
+	}
+
+	if a.debugLoggerFn != nil {
+		a.debugLoggerFn("storing AUR metadata query pattern", pattern)
+	}
+	a.codeCache[key] = compiled
+
+	return compiled, nil
+}
+
+func (a *Client) gojqGet(ctx context.Context, needle string, contains bool, by aur.By) (gojq.Iter, error) {
+	code, err := a.getPattern(by, contains)
+	if err != nil {
+		return nil, err
 	}
 
 	unmarshalledCache, errCache := a.cache(ctx)
@@ -61,18 +88,15 @@ func (a *Client) gojqGet(ctx context.Context, needle string, contains bool, by a
 		return nil, errCache
 	}
 
-	if a.debugLoggerFn != nil {
-		a.debugLoggerFn("AUR metadata query", pattern)
-	}
-
-	iter := compiled.RunWithContext(ctx, unmarshalledCache)
-
-	return iter, nil
+	return code.RunWithContext(ctx, unmarshalledCache, needle), nil
 }
 
 func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg, error) {
 	final := make([]aur.Pkg, 0, len(query.Needles))
 	dedup := make(map[string]bool)
+	if a.debugLoggerFn != nil {
+		a.debugLoggerFn("AUR metadata query", query.Needles)
+	}
 
 	for _, needle := range query.Needles {
 		iter, err := a.gojqGet(ctx, needle, query.Contains, query.By)
