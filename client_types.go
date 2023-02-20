@@ -25,7 +25,3 @@ type HTTPRequestDoer interface {
 type QueryClient interface {
 	Get(ctx context.Context, query *Query) ([]Pkg, error)
 }
-
-type Logger interface {
-	Debugln(a ...interface{})
-}

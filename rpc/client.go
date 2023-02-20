@@ -15,11 +15,13 @@ type ClientInterface interface {
 	aur.QueryClient
 	// Search queries the AUR DB with an optional By filter.
 	// Use By.None for default query param (name-desc)
-	Search(ctx context.Context, query string, by aur.By, reqEditors ...aur.RequestEditorFn) ([]aur.Pkg, error)
+	Search(ctx context.Context, query string, by aur.By) ([]aur.Pkg, error)
 
 	// Info gives detailed information on existing package.
-	Info(ctx context.Context, pkgs []string, reqEditors ...aur.RequestEditorFn) ([]aur.Pkg, error)
+	Info(ctx context.Context, pkgs []string) ([]aur.Pkg, error)
 }
+
+type LogFn func(a ...any)
 
 // Client for AUR searching and querying.
 type Client struct {
@@ -36,8 +38,8 @@ type Client struct {
 	// Batch size for batch requests.
 	batchSize int
 
-	// Logger for debugging.
-	logger aur.Logger
+	// Log Function for debugging.
+	logFn LogFn
 
 	// cache for storing info results
 	cache map[string]aur.Pkg
@@ -52,7 +54,7 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 		HTTPClient:     nil,
 		RequestEditors: []aur.RequestEditorFn{},
 		batchSize:      defaultBatchSize,
-		logger:         nil,
+		logFn:          nil,
 		cache:          make(map[string]aur.Pkg),
 	}
 
@@ -104,6 +106,15 @@ func WithBatchSize(batchSize int) ClientOption {
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
 		c.BaseURL = baseURL
+
+		return nil
+	}
+}
+
+// WithLogFn allows overriding the default log function.
+func WithLogFn(fn LogFn) ClientOption {
+	return func(c *Client) error {
+		c.logFn = fn
 
 		return nil
 	}

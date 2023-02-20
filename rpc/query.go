@@ -70,8 +70,8 @@ func (c *Client) batchInfo(ctx context.Context, names []string) ([]aur.Pkg, erro
 	for n := 0; n < len(missing); n += c.batchSize {
 		max := min(len(missing), n+c.batchSize)
 
-		if c.logger != nil {
-			c.logger.Debugln("AUR RPC:", missing[n:max])
+		if c.logFn != nil {
+			c.logFn("packages to query", missing[n:max])
 		}
 
 		tempInfo, requestErr := c.Info(ctx, missing[n:max])
@@ -100,6 +100,10 @@ func (c *Client) get(ctx context.Context, values url.Values) ([]aur.Pkg, error) 
 		if errR := r(ctx, req); errR != nil {
 			return nil, errR
 		}
+	}
+
+	if c.logFn != nil {
+		c.logFn("rpc request", req.URL.String())
 	}
 
 	resp, err := c.HTTPClient.Do(req)
