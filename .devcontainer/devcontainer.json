@@ -1,0 +1,16 @@
+{
+	"name": "Existing Dockerfile",
+	"build": {
+		"context": "..",
+		"dockerfile": "../.devcontainer/Dockerfile"
+	},
+	"remoteUser": "docker",
+	"workspaceFolder": "/workspaces/aur",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go"
+			]
+		}
+	}
+}
