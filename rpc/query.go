@@ -46,14 +46,6 @@ func (c *Client) Info(ctx context.Context, pkgs []string) ([]aur.Pkg, error) {
 	return c.get(ctx, v)
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
-
 func (c *Client) batchInfo(ctx context.Context, names []string) ([]aur.Pkg, error) {
 	info := make([]aur.Pkg, 0, len(names))
 	var err error
@@ -68,13 +60,13 @@ func (c *Client) batchInfo(ctx context.Context, names []string) ([]aur.Pkg, erro
 	}
 
 	for n := 0; n < len(missing); n += c.batchSize {
-		max := min(len(missing), n+c.batchSize)
+		maxIdx := min(len(missing), n+c.batchSize)
 
 		if c.logFn != nil {
-			c.logFn("packages to query", missing[n:max])
+			c.logFn("packages to query", missing[n:maxIdx])
 		}
 
-		tempInfo, requestErr := c.Info(ctx, missing[n:max])
+		tempInfo, requestErr := c.Info(ctx, missing[n:maxIdx])
 		if requestErr != nil {
 			err = multierror.Append(err, requestErr)
 			continue

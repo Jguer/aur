@@ -42,7 +42,7 @@ func parseRPCResponse(resp *http.Response) ([]aur.Pkg, error) {
 		return nil, fmt.Errorf("response decoding failed: %w", err)
 	}
 
-	if len(result.Error) > 0 {
+	if result.Error != "" {
 		return nil, &aur.PayloadError{
 			StatusCode: resp.StatusCode,
 			ErrorField: result.Error,
