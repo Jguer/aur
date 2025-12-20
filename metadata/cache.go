@@ -156,6 +156,7 @@ func (a *Client) downloadAURMetadata(ctx context.Context) (io.ReadCloser, error)
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 		return nil, fmt.Errorf("failed to download metadata: %s", resp.Status)
 	}
 
