@@ -26,6 +26,20 @@ linters:
     - unused
     - whitespace
   settings:
+    depguard:
+      rules:
+        Main:
+          allow:
+            - $gostd
+            - github.com/Jguer/aur
+            - github.com/Jguer/aur/rpc
+            - github.com/stretchr/testify/assert
+            - github.com/stretchr/testify/require
+            - github.com/stretchr/testify/mock
+            - github.com/ohler55/ojg/oj
+            - github.com/itchyny/gojq
+            - github.com/mitchellh/mapstructure
+            - github.com/hashicorp/go-multierror
     dupl:
       threshold: 100
     funlen:

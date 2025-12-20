@@ -1,6 +1,6 @@
 module github.com/Jguer/aur
 
-go 1.19
+go 1.25
 
 require (
 	github.com/itchyny/gojq v0.12.11
