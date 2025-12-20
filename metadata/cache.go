@@ -1,6 +1,8 @@
 package metadata
 
 import (
+	"bufio"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
@@ -154,8 +156,44 @@ func (a *Client) downloadAURMetadata(ctx context.Context) (io.ReadCloser, error)
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 		return nil, fmt.Errorf("failed to download metadata: %s", resp.Status)
 	}
 
-	return resp.Body, nil
+	return newGzipResponseReader(resp.Body)
+}
+
+func newGzipResponseReader(body io.ReadCloser) (io.ReadCloser, error) {
+	br := bufio.NewReader(body)
+
+	// gzip magic number: 0x1f, 0x8b
+	if head, err := br.Peek(2); err == nil && len(head) == 2 && head[0] == 0x1f && head[1] == 0x8b {
+		gz, err := gzip.NewReader(br)
+		if err != nil {
+			body.Close()
+			return nil, fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		return &gzipReader{Reader: gz, body: body}, nil
+	}
+
+	return &bufferedReader{Reader: br, body: body}, nil
+}
+
+type gzipReader struct {
+	*gzip.Reader
+	body io.Closer
+}
+
+func (z *gzipReader) Close() error {
+	z.Reader.Close()
+	return z.body.Close()
+}
+
+type bufferedReader struct {
+	io.Reader
+	body io.Closer
+}
+
+func (b *bufferedReader) Close() error {
+	return b.body.Close()
 }
