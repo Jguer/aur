@@ -3,54 +3,48 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Jguer/aur"
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/itchyny/gojq"
-	"github.com/mitchellh/mapstructure"
 )
 
 const joiner = " or "
 
 // Get returns a list of packages that provide the given search term.
 func (a *Client) Get(ctx context.Context, query *aur.Query) ([]aur.Pkg, error) {
-	found := make([]aur.Pkg, 0, len(query.Needles))
 	if len(query.Needles) == 0 {
-		return found, nil
+		return []aur.Pkg{}, nil
 	}
-
-	iterFound, errNeedle := a.gojqGetBatch(ctx, query)
-	if errNeedle != nil {
-		return nil, errNeedle
-	}
-
-	found = append(found, iterFound...)
-
-	return found, nil
+	return a.gojqGetBatch(ctx, query)
 }
 
 func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg, error) {
-	pattern := ".[] | select("
+	var sb strings.Builder
+	sb.WriteString(".[] | select(")
 
 	for i, searchTerm := range query.Needles {
 		if i != 0 {
-			pattern += joiner
+			sb.WriteString(joiner)
 		}
 
 		bys := toSearchBy(query.By)
 		for j, by := range bys {
 			if query.Contains && query.By != aur.Provides {
-				pattern += fmt.Sprintf("(.%s // empty | test(%q))", by, searchTerm)
+				fmt.Fprintf(&sb, "(.%s // empty | test(%q))", by, searchTerm)
 			} else {
-				pattern += fmt.Sprintf("(.%s == %q)", by, searchTerm)
+				fmt.Fprintf(&sb, "(.%s == %q)", by, searchTerm)
 			}
 
 			if j != len(bys)-1 {
-				pattern += joiner
+				sb.WriteString(joiner)
 			}
 		}
 	}
 
-	pattern += ")"
+	sb.WriteString(")")
+	pattern := sb.String()
 
 	if a.debugLoggerFn != nil {
 		a.debugLoggerFn("AUR metadata query", pattern)
@@ -69,13 +63,12 @@ func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg,
 	final := make([]aur.Pkg, 0, len(query.Needles))
 	iter := parsed.RunWithContext(ctx, unmarshalledCache) // or query.RunWithContext
 	dedup := make(map[string]bool)
-
 	for pkgMap, ok := iter.Next(); ok; pkgMap, ok = iter.Next() {
-		if err, ok := pkgMap.(error); ok {
-			return nil, err
+		if pkgErr, ok := pkgMap.(error); ok {
+			return nil, pkgErr
 		}
 
-		name := pkgMap.(map[string]interface{})["Name"].(string)
+		name := pkgMap.(map[string]any)["Name"].(string)
 		if dedup[name] {
 			continue
 		}
@@ -85,7 +78,7 @@ func (a *Client) gojqGetBatch(ctx context.Context, query *aur.Query) ([]aur.Pkg,
 		pkg := aur.Pkg{}
 		errU := mapstructure.Decode(pkgMap, &pkg)
 		if errU != nil {
-			return nil, fmt.Errorf("unable to decode aur package: %w: %+v", errU, pkgMap.(map[string]interface{}))
+			return nil, fmt.Errorf("unable to decode aur package: %w: %+v", errU, pkgMap.(map[string]any))
 		}
 
 		final = append(final, pkg)

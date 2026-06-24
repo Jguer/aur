@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -69,15 +68,17 @@ var validPayloadItems = []aur.Pkg{{
 }}
 
 func Test_newAURRPCRequest(t *testing.T) {
+	t.Parallel()
 	values := url.Values{}
 	values.Set("type", "search")
 	values.Set("arg", "test-query")
-	got, err := newAURRPCRequest(context.Background(), _defaultURL, values)
+	got, err := newAURRPCRequest(t.Context(), _defaultURL, values)
 	assert.NoError(t, err)
 	assert.Equal(t, "https://aur.archlinux.org/rpc?arg=test-query&type=search&v=5", got.URL.String())
 }
 
 func Test_parseRPCResponse(t *testing.T) {
+	t.Parallel()
 	type args struct {
 		resp *http.Response
 	}
@@ -141,6 +142,7 @@ func Test_parseRPCResponse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := parseRPCResponse(tt.args.resp)
 
 			if tt.wantErr {
@@ -167,6 +169,7 @@ func (m *MockedClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 func TestClient_Search(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c := &Client{
@@ -180,7 +183,7 @@ func TestClient_Search(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil)
 
-	got, err := c.Search(context.Background(), "test", aur.Name)
+	got, err := c.Search(t.Context(), "test", aur.Name)
 
 	assert.NoError(t, err)
 
@@ -195,6 +198,7 @@ func TestClient_Search(t *testing.T) {
 }
 
 func TestClient_Info(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c := &Client{
@@ -208,7 +212,7 @@ func TestClient_Info(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil)
 
-	got, err := c.Info(context.Background(), []string{"test"})
+	got, err := c.Info(t.Context(), []string{"test"})
 
 	assert.NoError(t, err)
 
@@ -223,6 +227,7 @@ func TestClient_Info(t *testing.T) {
 }
 
 func TestClient_GetInfo(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c, err := NewClient(WithHTTPClient(testClient))
@@ -233,7 +238,7 @@ func TestClient_GetInfo(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil)
 
-	got, err := c.Get(context.Background(), &aur.Query{
+	got, err := c.Get(t.Context(), &aur.Query{
 		Needles: []string{"test"},
 	})
 
@@ -250,6 +255,7 @@ func TestClient_GetInfo(t *testing.T) {
 }
 
 func TestClient_InfoNoMatch(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c := &Client{
@@ -263,7 +269,7 @@ func TestClient_InfoNoMatch(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(noMatchPayload)),
 	}, nil)
 
-	got, err := c.Info(context.Background(), []string{"test"})
+	got, err := c.Info(t.Context(), []string{"test"})
 
 	assert.NoError(t, err)
 
@@ -278,6 +284,7 @@ func TestClient_InfoNoMatch(t *testing.T) {
 }
 
 func TestClient_InfoError(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c := &Client{
@@ -291,7 +298,7 @@ func TestClient_InfoError(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(errorPayload)),
 	}, nil)
 
-	_, err := c.Info(context.Background(), []string{"test"})
+	_, err := c.Info(t.Context(), []string{"test"})
 
 	assert.ErrorIs(t, aur.ErrServiceUnavailable, err)
 
@@ -304,6 +311,7 @@ func TestClient_InfoError(t *testing.T) {
 }
 
 func TestClient_Get(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c, err := NewClient(WithHTTPClient(testClient), WithBatchSize(10))
@@ -319,7 +327,7 @@ func TestClient_Get(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil).Once()
 
-	got, err := c.Get(context.Background(), &aur.Query{
+	got, err := c.Get(t.Context(), &aur.Query{
 		By:       aur.Name,
 		Contains: true,
 		Needles:  []string{"test"},
@@ -342,6 +350,7 @@ func TestClient_Get(t *testing.T) {
 }
 
 func TestClient_NoBatch(t *testing.T) {
+	t.Parallel()
 	testClient := new(MockedClient)
 
 	c, err := NewClient(WithHTTPClient(testClient), WithBatchSize(0))
@@ -352,7 +361,7 @@ func TestClient_NoBatch(t *testing.T) {
 		Body:       io.NopCloser(bytes.NewBufferString(validPayload)),
 	}, nil).Once()
 
-	got, err := c.Get(context.Background(), &aur.Query{
+	got, err := c.Get(t.Context(), &aur.Query{
 		By:       aur.Name,
 		Contains: true,
 		Needles:  []string{"test"},

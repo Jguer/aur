@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -30,7 +29,7 @@ func TestGet(t *testing.T) {
 
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	type testcase struct {
 		desc          string

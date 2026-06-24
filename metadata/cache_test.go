@@ -78,7 +78,7 @@ func TestClientAssertEndpointCalled(t *testing.T) {
 		))
 
 	require.NoError(t, err)
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// cache file does not exist
 	_, err = client.makeCache(ctx)
@@ -104,7 +104,7 @@ func TestClientMakeCache(t *testing.T) {
 		))
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// cache file does not exist
 	byNew, err := client.makeCache(ctx)
@@ -142,7 +142,7 @@ func TestClientCacheAccess(t *testing.T) {
 		))
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// cache file does not exist
 	cache, err := client.cache(ctx)

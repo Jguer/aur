@@ -6,7 +6,7 @@ BIN := aur-cli
 GO ?= go
 GOFLAGS := -v
 EXTRA_GOFLAGS ?=
-LDFLAGS := $(LDFLAGS) -X main.version=dev -X main.builtBy=makefile`
+LDFLAGS := $(LDFLAGS) -X main.version=dev -X main.builtBy=makefile
 
 .PHONY: default
 default: build
@@ -26,7 +26,7 @@ fmt:
 
 .PHONY: test
 test:
-	$(GO) test $(GOFLAGS) ./... -coverprofile=.coverage.out
+	$(GO) test $(GOFLAGS) -race ./... -coverprofile=.coverage.out
 	go tool cover -func=.coverage.out
 
 .PHONY: build
