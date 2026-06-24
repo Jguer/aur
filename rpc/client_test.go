@@ -7,9 +7,11 @@ import (
 
 	"github.com/Jguer/aur"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewClient(t *testing.T) {
+	t.Parallel()
 	newHTTPClient := &http.Client{}
 
 	customRequestEditor := func(ctx context.Context, req *http.Request) error {
@@ -26,7 +28,6 @@ func TestNewClient(t *testing.T) {
 		wanthttpClient   *http.Client
 		wantRequestDoers []aur.RequestEditorFn
 		wantErr          bool
-		wantBatchSize    int
 	}{
 		{
 			name:             "default",
@@ -35,7 +36,6 @@ func TestNewClient(t *testing.T) {
 			wanthttpClient:   http.DefaultClient,
 			wantErr:          false,
 			wantRequestDoers: []aur.RequestEditorFn{},
-			wantBatchSize:    150,
 		},
 		{
 			name:             "custom base url",
@@ -44,7 +44,6 @@ func TestNewClient(t *testing.T) {
 			wanthttpClient:   http.DefaultClient,
 			wantErr:          false,
 			wantRequestDoers: []aur.RequestEditorFn{},
-			wantBatchSize:    150,
 		},
 		{
 			name:             "custom base url complete",
@@ -53,7 +52,6 @@ func TestNewClient(t *testing.T) {
 			wanthttpClient:   http.DefaultClient,
 			wantErr:          false,
 			wantRequestDoers: []aur.RequestEditorFn{},
-			wantBatchSize:    150,
 		},
 		{
 			name:             "custom http client",
@@ -62,7 +60,6 @@ func TestNewClient(t *testing.T) {
 			wanthttpClient:   newHTTPClient,
 			wantErr:          false,
 			wantRequestDoers: []aur.RequestEditorFn{},
-			wantBatchSize:    150,
 		},
 		{
 			name:             "custom request editor",
@@ -71,7 +68,6 @@ func TestNewClient(t *testing.T) {
 			wanthttpClient:   newHTTPClient,
 			wantErr:          false,
 			wantRequestDoers: []aur.RequestEditorFn{customRequestEditor},
-			wantBatchSize:    150,
 		},
 		{
 			name:             "want batch size",
@@ -80,16 +76,17 @@ func TestNewClient(t *testing.T) {
 			wanthttpClient:   newHTTPClient,
 			wantErr:          false,
 			wantRequestDoers: []aur.RequestEditorFn{},
-			wantBatchSize:    300,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := NewClient(tt.args.opts...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("NewClient() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr {
+				require.Error(t, err)
 				return
 			}
+			require.NoError(t, err)
 			assert.Equal(t, tt.wantBaseURL, got.BaseURL)
 			assert.Equal(t, tt.wanthttpClient, got.HTTPClient)
 			assert.Equal(t, len(tt.wantRequestDoers), len(got.RequestEditors))

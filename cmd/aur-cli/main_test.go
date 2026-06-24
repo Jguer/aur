@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"io"
-	"os"
 	"testing"
 
 	"github.com/Jguer/aur"
@@ -11,6 +10,7 @@ import (
 )
 
 func Test_printSearch(t *testing.T) {
+	t.Parallel()
 	var b bytes.Buffer
 
 	a := &aur.Pkg{
@@ -29,7 +29,7 @@ func Test_printSearch(t *testing.T) {
 }
 
 func Test_printInfo(t *testing.T) {
-	os.Setenv("TZ", "UTC")
+	t.Setenv("TZ", "UTC")
 
 	a := &aur.Pkg{
 		Name:           "test",
@@ -59,6 +59,7 @@ func Test_printInfo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			var b bytes.Buffer
 			testWriter := io.Writer(&b)
 

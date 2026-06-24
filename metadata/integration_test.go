@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 	"testing"
@@ -22,7 +21,7 @@ func TestIntegrationRealAURDownload(t *testing.T) {
 	client, err := New(WithCacheFilePath(cacheFilePath))
 	require.NoError(t, err)
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// This should download the .gz file, transparently decompress it, and save it as JSON
 	data, err := client.makeCache(ctx)
@@ -30,7 +29,7 @@ func TestIntegrationRealAURDownload(t *testing.T) {
 	assert.NotEmpty(t, data, "Returned data should not be empty")
 
 	// Verify the returned data is valid JSON
-	var js interface{}
+	var js any
 	err = json.Unmarshal(data, &js)
 	assert.NoError(t, err, "Downloaded data should be valid JSON")
 

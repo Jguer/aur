@@ -2,11 +2,11 @@ package rpc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
 	"github.com/Jguer/aur"
-	"github.com/hashicorp/go-multierror"
 )
 
 // Search queries the AUR DB with an optional By field.
@@ -29,7 +29,7 @@ func (c *Client) batchSearch(ctx context.Context, queries []string, by aur.By) (
 	for _, query := range queries {
 		tmpPkgs, errS := c.Search(ctx, query, by)
 		if errS != nil {
-			err = multierror.Append(err, errS)
+			err = errors.Join(err, errS)
 			continue
 		}
 
@@ -68,7 +68,7 @@ func (c *Client) batchInfo(ctx context.Context, names []string) ([]aur.Pkg, erro
 
 		tempInfo, requestErr := c.Info(ctx, missing[n:maxIdx])
 		if requestErr != nil {
-			err = multierror.Append(err, requestErr)
+			err = errors.Join(err, requestErr)
 			continue
 		}
 

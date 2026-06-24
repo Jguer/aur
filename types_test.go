@@ -7,6 +7,7 @@ import (
 )
 
 func TestBy_String(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name string
 		by   By
@@ -66,6 +67,7 @@ func TestBy_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			if tt.by == 23 {
 				assert.Panics(t, func() { _ = tt.by.String() })
 			} else {
