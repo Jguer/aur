@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/Jguer/aur"
-	"github.com/itchyny/gojq"
 	"github.com/go-viper/mapstructure/v2"
+	"github.com/itchyny/gojq"
 )
 
 const joiner = " or "
